@@ -2,9 +2,16 @@
 #include "simple_MC_integration.hpp"
 typedef HPolytope<Point> HPOLYTOPE;
 typedef Polynomial<Point, NT> POLYNOMIAL;
-enum walktype { BW, ABW };
+enum walktype {
+    Ba,    // BallWalk
+    CDHR,  // CDHRWalk
+    RDHR,  // RDHRWalk
+    Bi,    // BilliardWalk
+    ABi,   // AcceleratedBilliwardWalk
+};
 
-template <typename VolumeWalkType = BallWalk, typename RNG = RandomNumberGenerator, typename NT>
+template <typename VolumeWalkType = BallWalk,
+          typename RNG = RandomNumberGenerator, typename NT>
 NT compute_volume(HPOLYTOPE& pt, NT error, volumetype vtype, int wlength) {
     DEBUG("Computing volume instead" << std::endl);
     NT res;
@@ -39,11 +46,23 @@ NT integrate_polynomial(POLYNOMIAL& pn, HPOLYTOPE& pt, NT error,
     }
     NT res;
     switch (wtype) {
-    case BW:
+    case Ba:    // BallWalk
+        res = simple_mc_polytope_integrate<BallWalk, HPOLYTOPE>(
+            pn, pt, N, vtype, wlength, error);
+        break;
+    case CDHR:  // CDHRWalk
+        res = simple_mc_polytope_integrate<CDHRWalk, HPOLYTOPE>(
+            pn, pt, N, vtype, wlength, error);
+        break;
+    case RDHR:  // RDHRWalk
+        res = simple_mc_polytope_integrate<RDHRWalk, HPOLYTOPE>(
+            pn, pt, N, vtype, wlength, error);
+        break;
+    case Bi:    // BilliardWalk
         res = simple_mc_polytope_integrate<BilliardWalk, HPOLYTOPE>(
             pn, pt, N, vtype, wlength, error);
         break;
-    case ABW:
+    case ABi:   // AcceleratedBilliwardWalk
         res = simple_mc_polytope_integrate<AcceleratedBilliardWalk, HPOLYTOPE>(
             pn, pt, N, vtype, wlength, error);
         break;

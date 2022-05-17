@@ -9,6 +9,11 @@ FetchContent_Declare(volesti
 )
 FetchContent_MakeAvailable(volesti)
 
+FetchContent_Declare(argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse
+)
+FetchContent_MakeAvailable(argparse)
+
 set(default_build_type "Release")
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -43,6 +48,7 @@ message(STATUS "Library lp_solve found: ${LP_SOLVE}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
 include_directories (BEFORE ${PROJECT_SOURCE_DIR}/include)
+include_directories (BEFORE ${argparse_SOURCE_DIR}/include)
 include_directories (BEFORE ${volesti_SOURCE_DIR}/external)
 include_directories (BEFORE ${volesti_SOURCE_DIR}/external)
 include_directories (BEFORE ${volesti_SOURCE_DIR}/external/minimum_ellipsoid)
@@ -51,4 +57,5 @@ include_directories (BEFORE ${volesti_SOURCE_DIR}/include/generators)
 include_directories (BEFORE ${volesti_SOURCE_DIR}/include/integration)
 include_directories (BEFORE ${volesti_SOURCE_DIR}/include/misc)
 # add_subdirectory(src)
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(src)

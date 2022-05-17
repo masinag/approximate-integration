@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#define UNDEFINED -1
+
 typedef double Rational;
 
 void help() {
@@ -29,71 +31,23 @@ void help() {
         << "Optional arguments" << std::endl
         << "volume_type:\t\tVolume computation method" << std::endl
         << "\t\t\t\tSOB: Sequence of Balls" << std::endl
-        << "\t\t\t\tCB: Cooling Balls" << std::endl
-        << "\t\t\t\tCG: Cooling Gaussians (default)" << std::endl
+        << "\t\t\t\tCB: Cooling Balls (default)" << std::endl
+        << "\t\t\t\tCG: Cooling Gaussians" << std::endl
         << "walk_type:\t\tType of random walk" << std::endl
-        << "\t\t\t\tBW: Billiard Walk" << std::endl
-        << "\t\t\t\tABW: Accelerated Billiard Walk (default)" << std::endl
+        << "\t\t\tBa: BallWalk" << std::endl
+        << "\t\t\tCDHR: CDHRWalk (default)" << std::endl
+        << "\t\t\tRDHR: RDHRWalk" << std::endl
+        << "\t\t\tBi: BilliardWalk" << std::endl
+        << "\t\t\tABi: AcceleratedBilliwardWalk"
+        << std::endl
+        // << "\t\t\tGBa: GaussianBallWalk" << std::endl
+        // << "\t\t\tGCDHR: GaussianCDHRWalk" << std::endl
+        // << "\t\t\tGRDHR: GaussianRDHRWalk" << std::endl
+        // << "\t\t\tGABi: GaussianAcceleratedBilliwardWalk" << std::endl
         << "N:\t\t\tNumber of samples (default 1000)" << std::endl
-        << "walk_length:\t\tLength of random walk (default 10)" << std::endl;
-}
-
-void parse_args(int argc, char* argv[], std::string& ptfile,
-                std::string& pnfile, Rational& error, volumetype& vtype,
-                walktype& wtype, int& N, int& wlength) {
-    if (argc < 4) {
-        throw std::invalid_argument("Bad number of parameters");
-    }
-    ptfile = argv[1];
-    pnfile = argv[2];
-    error = std::stod(argv[3]);
-    if (error <= 0.0L || error >= 1) {
-        throw std::invalid_argument("Error must be a a real number in (0, 1)");
-    }
-
-    // optional parameters
-    vtype = CG;
-    wtype = ABW;
-    N = 1000;
-    wlength = 10;
-    if (argc > 4) {
-        if (std::strcmp(argv[4], "CB") == 0) {
-            vtype = CB;
-        } else if (std::strcmp(argv[4], "CG") == 0) {
-            vtype = CG;
-        } else if (std::strcmp(argv[4], "SOB") == 0) {
-            vtype = SOB;
-        } else {
-            throw std::invalid_argument(
-                "Volume type must be one of \"CB\", \"CG\", \"SOB\"");
-        }
-    }
-
-    if (argc > 5) {
-        if (std::strcmp(argv[5], "BW") == 0) {
-            wtype = BW;
-        } else if (std::strcmp(argv[5], "ABW") == 0) {
-            wtype = ABW;
-        } else {
-            throw std::invalid_argument(
-                "Walk type must be one of \"BW\", \"ABW\"");
-        }
-    }
-
-    if (argc > 6) {
-        N = std::stol(argv[6]);
-        if (N <= 0) {
-            throw std::invalid_argument("N must be a positive integer");
-        }
-    }
-
-    if (argc > 7) {
-        wlength = std::stol(argv[7]);
-        if (wlength <= 0) {
-            throw std::invalid_argument(
-                "walk_length must be a positive integer");
-        }
-    }
+        << "walk_length:\t\tLength of random walk (default d^2 where d is the "
+           "number of dimensions of the polytope)"
+        << std::endl;
 }
 
 void read_pt(std::string& ptfile, HPOLYTOPE& pt) {
@@ -116,16 +70,92 @@ void read_pn(std::string& pnfile, POLYNOMIAL& pn) {
 
 void write_res(Rational res) { std::cout << "Decimal: " << res << std::endl; }
 
+void parse_args(int argc, char* argv[], HPOLYTOPE& pt, POLYNOMIAL& pn,
+                Rational& error, volumetype& vtype, walktype& wtype, int& N,
+                int& wlength) {
+    if (argc < 4)
+        throw std::invalid_argument("Bad number of parameters");
+
+    std::string ptfile(argv[1]);
+    std::string pnfile(argv[2]);
+    read_pt(ptfile, pt);
+    read_pn(pnfile, pn);
+
+    error = std::stod(argv[3]);
+    if (error <= 0.0L || error >= 1)
+        throw std::invalid_argument("Error must be a a real number in (0, 1)");
+
+    // optional parameters
+    vtype = CB;
+    wtype = CDHR;
+    N = 1000;
+    wlength = pt.dimension() * pt.dimension();
+    if (argc > 4) {
+        std::string volume(argv[4]);
+        if (volume == "CB")
+            vtype = CB;
+        else if (volume == "CG")
+            vtype = CG;
+        else if (volume == "SOB")
+            vtype = SOB;
+        else
+            throw std::invalid_argument("Invalid volume method");
+    }
+
+    if (argc > 5) {
+        std::string walk(argv[5]);
+        if (walk == "Ba")
+            wtype = Ba;
+        else if (walk == "CDHR")
+            wtype = CDHR;
+        else if (walk == "RDHR")
+            wtype = RDHR;
+        else if (walk == "Bi")
+            wtype = Bi;
+        else if (walk == "ABi")
+            wtype = ABi;
+        // else if (walk == "GBa")
+        //     wtype = GBa;
+        // else if (walk == "GCDHR")
+        //     wtype = GCDHR;
+        // else if (walk == "GRDHR")
+        //     wtype = GRDHR;
+        // else if (walk == "GABi")
+        //     wtype = GABi;
+        else
+            throw std::invalid_argument("Invalid walk type");
+    }
+
+    if (argc > 6) {
+        N = std::stol(argv[6]);
+        if (N <= 0)
+            throw std::invalid_argument("N must be a positive integer");
+    }
+
+    if (argc > 7) {
+        wlength = std::stol(argv[7]);
+        if (wlength <= 0)
+            throw std::invalid_argument(
+                "walk_length must be a positive integer");
+    }
+}
+
 int main(int argc, char* argv[]) {
     // called as ./integrate_poly polytope_file polynomial_file error
     // [volumetype walktype N walk_length]
-    std::string ptfile, pnfile;
+    HPOLYTOPE pt;
+    POLYNOMIAL pn;
     volumetype vtype;
     walktype wtype;
     double error;
     int N, wlength;
-    parse_args(argc, argv, ptfile, pnfile, error, vtype, wtype, N,
-                    wlength);
+    try {
+        parse_args(argc, argv, pt, pn, error, vtype, wtype, N, wlength);
+    } catch (const std::invalid_argument& ex) {
+        std::cerr << ex.what() << std::endl;
+        help();
+        exit(1);
+    }
     // std::cerr << "Polytope file " << ptfile << std::endl
     //           << "Polynomial file " << pnfile << std::endl
     //           << "error " << error << std::endl
@@ -133,10 +163,6 @@ int main(int argc, char* argv[]) {
     //           << "walktype " << wtype << std::endl
     //           << "N " << N << std::endl
     //           << "wlength " << wlength << std::endl;
-    HPOLYTOPE pt;
-    POLYNOMIAL pn;
-    read_pt(ptfile, pt);
-    read_pn(pnfile, pn); 
 
     DEBUG("Integrating " << pn << std::endl);
     // std::cerr << "Over polytope" << std::endl;
