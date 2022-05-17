@@ -1,18 +1,27 @@
+#ifndef INTEGRATION_H
+#define INTEGRATION_H
 #include "polynomial.hpp"
 #include "simple_MC_integration.hpp"
 typedef HPolytope<Point> HPOLYTOPE;
 typedef Polynomial<Point, NT> POLYNOMIAL;
 enum walktype {
-    Ba,    // BallWalk
-    CDHR,  // CDHRWalk
-    RDHR,  // RDHRWalk
-    Bi,    // BilliardWalk
-    ABi,   // AcceleratedBilliwardWalk
+    Ba,   // BallWalk
+    CDHR, // CDHRWalk
+    RDHR, // RDHRWalk
+    Bi,   // BilliardWalk
+    ABi,  // AcceleratedBilliwardWalk
 };
+
+static const std::unordered_map<std::string, volumetype> volumes = {
+    {"CB", CB}, {"CG", CG}, {"SOB", SOB}};
+
+static const std::unordered_map<std::string, walktype> walks = {
+    {"Ba", Ba}, {"RDHR", RDHR}, {"CDHR", CDHR}, {"Bi", Bi}, {"ABi", ABi}};
 
 template <typename VolumeWalkType = BallWalk,
           typename RNG = RandomNumberGenerator, typename NT>
-NT compute_volume(HPOLYTOPE& pt, NT error, volumetype vtype, int wlength) {
+NT compute_volume(HPOLYTOPE& pt, const NT error, const volumetype vtype,
+                  const int wlength) {
     DEBUG("Computing volume instead" << std::endl);
     NT res;
     switch (vtype) {
@@ -37,8 +46,9 @@ NT compute_volume(HPOLYTOPE& pt, NT error, volumetype vtype, int wlength) {
 }
 
 template <typename NT>
-NT integrate_polynomial(POLYNOMIAL& pn, HPOLYTOPE& pt, NT error,
-                        volumetype vtype, walktype wtype, int N, int wlength) {
+NT integrate_polynomial(const POLYNOMIAL& pn, HPOLYTOPE& pt, const NT error,
+                        const volumetype vtype, const walktype wtype,
+                        const int N, const int wlength) {
     NT c;
     if (pn.is_constant(c)) {
         DEBUG("Constant " << c << std::endl);
@@ -46,23 +56,23 @@ NT integrate_polynomial(POLYNOMIAL& pn, HPOLYTOPE& pt, NT error,
     }
     NT res;
     switch (wtype) {
-    case Ba:    // BallWalk
+    case Ba: // BallWalk
         res = simple_mc_polytope_integrate<BallWalk, HPOLYTOPE>(
             pn, pt, N, vtype, wlength, error);
         break;
-    case CDHR:  // CDHRWalk
+    case CDHR: // CDHRWalk
         res = simple_mc_polytope_integrate<CDHRWalk, HPOLYTOPE>(
             pn, pt, N, vtype, wlength, error);
         break;
-    case RDHR:  // RDHRWalk
+    case RDHR: // RDHRWalk
         res = simple_mc_polytope_integrate<RDHRWalk, HPOLYTOPE>(
             pn, pt, N, vtype, wlength, error);
         break;
-    case Bi:    // BilliardWalk
+    case Bi: // BilliardWalk
         res = simple_mc_polytope_integrate<BilliardWalk, HPOLYTOPE>(
             pn, pt, N, vtype, wlength, error);
         break;
-    case ABi:   // AcceleratedBilliwardWalk
+    case ABi: // AcceleratedBilliwardWalk
         res = simple_mc_polytope_integrate<AcceleratedBilliardWalk, HPOLYTOPE>(
             pn, pt, N, vtype, wlength, error);
         break;
@@ -72,3 +82,4 @@ NT integrate_polynomial(POLYNOMIAL& pn, HPOLYTOPE& pt, NT error,
     }
     return res;
 }
+#endif

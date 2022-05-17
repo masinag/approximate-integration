@@ -20,10 +20,11 @@ template <typename Point, typename NT> class Monomial {
     std::vector<std::pair<int, int>> var_exp;
 
   public:
-    Monomial(NT coefficient, std::vector<std::pair<int, int>>& var_exp)
+    Monomial(const NT coefficient,
+             const std::vector<std::pair<int, int>>& var_exp)
         : coefficient(coefficient), var_exp(var_exp) {}
 
-    double operator()(Point X) {
+    double operator()(const Point X) const {
         double total = coefficient;
         for (auto& v : var_exp) {
             total *= std::pow(X[v.first], v.second);
@@ -43,7 +44,7 @@ template <typename Point, typename NT> class Monomial {
     /**
      * Check if monomial is a constant; if so, store in c its constant value.
      */
-    bool is_constant(double& c) {
+    bool is_constant(double& c) const {
         c = coefficient;
         return var_exp.empty();
     }
@@ -54,12 +55,12 @@ template <typename Point, typename NT> class Polynomial {
     std::vector<Monomial<Point, NT>> monomials;
 
   public:
-    Polynomial& operator+=(Monomial<Point, NT>& monomial) {
+    Polynomial& operator+=(const Monomial<Point, NT>& monomial) {
         monomials.push_back(monomial);
         return *this;
     }
 
-    double operator()(Point X) {
+    double operator()(const Point X) const {
         NT total = 0.0L;
         for (auto& m : monomials) {
             total += m(X);
@@ -79,7 +80,7 @@ template <typename Point, typename NT> class Polynomial {
     /**
      * Check if polynomial is a constant; if so, store in c its constant value.
      */
-    bool is_constant(NT& c) {
+    bool is_constant(NT& c) const {
         c = 0.0L;
         NT mc;
         for (auto& monomial : monomials) {
@@ -118,7 +119,7 @@ inline void read_polynomial(std::istream& is, Polynomial<Point, NT>& p) {
     std::getline(is, line);
     DEBUG("Parsing " << line << std::endl);
     const char* line_c = line.c_str();
-    size_t size = line.size();
+    const size_t size = line.size();
 
     std::vector<std::pair<int, int>> var_exp;
     NT coefficient;
