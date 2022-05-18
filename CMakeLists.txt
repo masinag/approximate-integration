@@ -3,18 +3,10 @@ project(ApproximateIntegration CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
 include(FetchContent)
-FetchContent_Declare(volesti
-    GIT_REPOSITORY https://github.com/GeomScale/volesti
-    GIT_TAG 2e6572d9ba757de311f2a55b09abf8f9c02e932e
-)
-FetchContent_MakeAvailable(volesti)
-
-FetchContent_Declare(argparse
-    GIT_REPOSITORY https://github.com/p-ranav/argparse
-)
-FetchContent_MakeAvailable(argparse)
 
 set(default_build_type "Release")
+set(volesti_remote "https://github.com/GeomScale/volesti")
+set(argparse_remote "https://github.com/p-ranav/argparse")
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
@@ -25,7 +17,21 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-add_definitions(-DDISABLE_NLP_ORACLES)
+
+message(STATUS "Fetching volesti from ${volesti_remote}")
+FetchContent_Declare(volesti
+    GIT_REPOSITORY ${volesti_remote}
+    GIT_TAG 2e6572d9ba757de311f2a55b09abf8f9c02e932e
+)
+FetchContent_MakeAvailable(volesti)
+message(STATUS "Volesti fetched correctly")
+
+message(STATUS "Fetching argparse from ${argparse_remote}")
+FetchContent_Declare(argparse
+    GIT_REPOSITORY ${argparse_remote}
+)
+FetchContent_MakeAvailable(argparse)
+message(STATUS "Argparse fetched correctly")
 
 include("${volesti_SOURCE_DIR}/external/cmake-files/Eigen.cmake")
 GetEigen()
@@ -47,15 +53,6 @@ message(STATUS "Library lp_solve found: ${LP_SOLVE}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
-include_directories (BEFORE ${PROJECT_SOURCE_DIR}/include)
-include_directories (BEFORE ${argparse_SOURCE_DIR}/include)
-include_directories (BEFORE ${volesti_SOURCE_DIR}/external)
-include_directories (BEFORE ${volesti_SOURCE_DIR}/external)
-include_directories (BEFORE ${volesti_SOURCE_DIR}/external/minimum_ellipsoid)
-include_directories (BEFORE ${volesti_SOURCE_DIR}/include)
-include_directories (BEFORE ${volesti_SOURCE_DIR}/include/generators)
-include_directories (BEFORE ${volesti_SOURCE_DIR}/include/integration)
-include_directories (BEFORE ${volesti_SOURCE_DIR}/include/misc)
 # add_subdirectory(src)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(src)

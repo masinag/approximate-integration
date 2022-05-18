@@ -57,7 +57,7 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, POLYNOMIAL& pn,
         });
     parser.add_argument("--walk")
         .help("The type of random walk to sample points. The available types "
-              "are Ball Walk (Ba), (CDHR), (RDHR), Billiard Walk (Bi), "
+              "are Ball Walk (Ba), Random-Directions (RDHR) and Coordinate-Directions (CDHR) Hit and Run, Billiard Walk (Bi), "
               "Accelerated Billiard Walk (ABi)")
         .default_value(std::string("CDHR"))
         .action([](const std::string& value) {
