@@ -3,3 +3,8 @@ compile_commands.json
 build/
 data/
 venv/
+.idea
+.ccls-cache
+cmake-build-debug
+cmake-build-release
+build

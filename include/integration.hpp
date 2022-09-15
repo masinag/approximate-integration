@@ -1,9 +1,9 @@
 #ifndef INTEGRATION_H
 #define INTEGRATION_H
-#include "polynomial.hpp"
+#include "function.hpp"
 #include "simple_MC_integration.hpp"
 typedef HPolytope<Point> HPOLYTOPE;
-typedef Polynomial<Point, NT> POLYNOMIAL;
+typedef Function<Point, NT> FUNCTION;
 enum walktype {
     Ba,   // BallWalk
     CDHR, // CDHRWalk
@@ -18,62 +18,33 @@ static const std::unordered_map<std::string, volumetype> volumes = {
 static const std::unordered_map<std::string, walktype> walks = {
     {"Ba", Ba}, {"RDHR", RDHR}, {"CDHR", CDHR}, {"Bi", Bi}, {"ABi", ABi}};
 
-template <typename VolumeWalkType = BallWalk,
-          typename RNG = RandomNumberGenerator, typename NT>
-NT compute_volume(HPOLYTOPE& pt, const NT error, const volumetype vtype,
-                  const int wlength) {
-    DEBUG("Computing volume instead" << std::endl);
-    NT res;
-    switch (vtype) {
-    case CB:
-        res = volume_cooling_balls<VolumeWalkType, RNG, HPOLYTOPE>(pt, error,
-                                                                   wlength)
-                  .second;
-        break;
-    case CG:
-        res = volume_cooling_gaussians<GaussianBallWalk, RNG, HPOLYTOPE>(
-            pt, error, wlength);
-        break;
-    case SOB:
-        res = volume_sequence_of_balls<VolumeWalkType, RNG, HPOLYTOPE>(
-            pt, error, wlength);
-        break;
-    default:
-        std::cerr << "Invalid Volume Type" << std::endl;
-        exit(1);
-    }
-    return res;
-}
 
 template <typename NT>
-NT integrate_polynomial(const POLYNOMIAL& pn, HPOLYTOPE& pt, const NT error,
-                        const volumetype vtype, const walktype wtype,
-                        const int N, const int wlength) {
-    NT c;
-    if (pn.is_constant(c)) {
-        DEBUG("Constant " << c << std::endl);
-        return c * compute_volume(pt, error, vtype, wlength);
-    }
+NT integrate_function(const FUNCTION& pn, HPOLYTOPE& pt, const NT error,
+                      const volumetype vtype, const walktype wtype, const int N,
+                      const int wlength) {
     NT res;
     switch (wtype) {
     case Ba: // BallWalk
-        res = simple_mc_polytope_integrate<BallWalk, HPOLYTOPE>(
+        res = simple_mc_polytope_integrate<BallWalk, HPOLYTOPE, BallWalk>(
             pn, pt, N, vtype, wlength, error);
         break;
     case CDHR: // CDHRWalk
-        res = simple_mc_polytope_integrate<CDHRWalk, HPOLYTOPE>(
+        res = simple_mc_polytope_integrate<CDHRWalk, HPOLYTOPE, CDHRWalk>(
             pn, pt, N, vtype, wlength, error);
         break;
     case RDHR: // RDHRWalk
-        res = simple_mc_polytope_integrate<RDHRWalk, HPOLYTOPE>(
+        res = simple_mc_polytope_integrate<RDHRWalk, HPOLYTOPE, RDHRWalk>(
             pn, pt, N, vtype, wlength, error);
         break;
     case Bi: // BilliardWalk
-        res = simple_mc_polytope_integrate<BilliardWalk, HPOLYTOPE>(
-            pn, pt, N, vtype, wlength, error);
+        res =
+            simple_mc_polytope_integrate<BilliardWalk, HPOLYTOPE, BilliardWalk>(
+                pn, pt, N, vtype, wlength, error);
         break;
     case ABi: // AcceleratedBilliwardWalk
-        res = simple_mc_polytope_integrate<AcceleratedBilliardWalk, HPOLYTOPE>(
+        res = simple_mc_polytope_integrate<AcceleratedBilliardWalk, HPOLYTOPE,
+                                           AcceleratedBilliardWalk>(
             pn, pt, N, vtype, wlength, error);
         break;
     default:

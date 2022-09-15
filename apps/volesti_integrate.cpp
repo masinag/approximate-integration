@@ -1,3 +1,4 @@
+#include "function.hpp"
 #include "integration.hpp"
 #include <argparse/argparse.hpp>
 #include <exception>
@@ -8,11 +9,10 @@
 #include <unordered_map>
 #include <vector>
 
-typedef double Rational;
 
 void read_pt(const std::string& ptfile, HPOLYTOPE& pt) {
     std::ifstream inp;
-    std::vector<std::vector<Rational>> Pin;
+    std::vector<std::vector<NT>> Pin;
     inp.open(ptfile, std::ifstream::in);
     if (!inp.good())
         throw std::invalid_argument("Polytope file does not exist");
@@ -20,31 +20,36 @@ void read_pt(const std::string& ptfile, HPOLYTOPE& pt) {
     pt = HPOLYTOPE(Pin);
 }
 
-void read_pn(const std::string& pnfile, POLYNOMIAL& pn) {
+void read_fn(const std::string& fnfile, FUNCTION& fn) {
     std::ifstream inp;
-    inp.open(pnfile, std::ifstream::in);
+    inp.open(fnfile, std::ifstream::in);
     if (!inp.good())
-        throw std::invalid_argument("Polynomial file does not exist");
-    read_polynomial(inp, pn);
+        throw std::invalid_argument("Integrand file does not exist");
+    read_function(inp, fn);
 }
 
-void write_res(Rational res) { std::cout << "Decimal: " << res << std::endl; }
+void write_res(NT res) { std::cout << "Decimal: " << res << std::endl; }
 
-void parse_args(int argc, char* argv[], HPOLYTOPE& pt, POLYNOMIAL& pn,
-                Rational& error, volumetype& vtype, walktype& wtype,
+void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn,
+                NT& error, volumetype& vtype, walktype& wtype,
                 unsigned int& N, unsigned int& wlength) {
     argparse::ArgumentParser parser("./volesti_integrate_polynomial");
     parser.add_description(
         "Approximate integration of polynomial over polytopes");
+
+    // polytope file
     parser.add_argument("polytope_file")
         .help("The file containing the polytope to integrate over in .hrep "
               "format");
-    parser.add_argument("polynomial_file")
-        .help("The file containing the polynomial to integrate in LattE "
-              "format [[coefficient,[exponent vector]],...]");
+    // polynomial file
+    parser.add_argument("integrand_file")
+        .help("The file containing the function to integrate in exprtk "
+              "format");
+    // relative error
     parser.add_argument("error")
         .help("The relative error tolerated")
-        .scan<'g', Rational>();
+        .scan<'g', NT>();
+    // volume algorithm
     parser.add_argument("--volume")
         .help("The method used to compute the volume. The available methods "
               "are Cooling Balls (CB), Cooling Gaussians (CG) and Sequence Of "
@@ -55,9 +60,11 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, POLYNOMIAL& pn,
                 return value;
             throw std::runtime_error("Invalid volume method");
         });
+    // random walk type
     parser.add_argument("--walk")
         .help("The type of random walk to sample points. The available types "
-              "are Ball Walk (Ba), Random-Directions (RDHR) and Coordinate-Directions (CDHR) Hit and Run, Billiard Walk (Bi), "
+              "are Ball Walk (Ba), Random-Directions (RDHR) and "
+              "Coordinate-Directions (CDHR) Hit and Run, Billiard Walk (Bi), "
               "Accelerated Billiard Walk (ABi)")
         .default_value(std::string("CDHR"))
         .action([](const std::string& value) {
@@ -65,47 +72,59 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, POLYNOMIAL& pn,
                 return value;
             throw std::runtime_error("Invalid walk type");
         });
+    // number of points for integral
     parser.add_argument("--N")
         .help("The number of points used to estimate the integral")
         .default_value(1000U)
         .scan<'u', unsigned int>();
+    // random walk length
+    std::unordered_map<std::string, double> default_wlength_exp = {
+        {"RDHR", 3}, {"CDHR", 10}, {"Ba", 2.5}, {"Bi", 2}, {"ABi", 2},
+    };
+    std::ostringstream ss;
+    ss << "The length of the random walk to sample random points. If 0, a "
+          "default value is set to: \n";
+    for (const auto& entry : default_wlength_exp) {
+        ss << '\t' << entry.first << ": d^" << entry.second << std::endl;
+    }
+    ss << "where d is the number of dimensions of the polytope";
     parser.add_argument("--wlength")
-        .help("The length of the random walk to sample random points. If 0, a "
-              "default value is set to d^2, where d is the number of "
-              "dimensions of the polytope")
+        .help(ss.str())
         .default_value(0U)
         .scan<'u', unsigned int>();
     parser.parse_args(argc, argv);
 
+    // parse arguments
     std::string ptfile = parser.get<std::string>("polytope_file");
-    std::string pnfile = parser.get<std::string>("polynomial_file");
+    std::string fnfile = parser.get<std::string>("integrand_file");
 
     read_pt(ptfile, pt);
-    read_pn(pnfile, pn);
+    read_fn(fnfile, fn);
 
-    error = parser.get<Rational>("error");
+    error = parser.get<NT>("error");
     if (error <= 0.0L || error >= 1)
         throw std::runtime_error("Error must be a a real number in (0, 1)");
 
     vtype = volumes.at(parser.get<std::string>("--volume"));
-    wtype = walks.at(parser.get<std::string>("--walk"));
+    std::string wtype_str = parser.get<std::string>("--walk");
+    wtype = walks.at(wtype_str);
     N = parser.get<unsigned int>("--N");
     wlength = parser.get<unsigned int>("--wlength");
     if (wlength == 0U)
-        wlength = pt.dimension() * pt.dimension();
+        wlength = std::pow(pt.dimension(), default_wlength_exp[wtype_str]);
 }
 
 int main(int argc, char* argv[]) {
     // called as ./integrate_poly polytope_file polynomial_file error
     // [volumetype walktype N walk_length]
     HPOLYTOPE pt;
-    POLYNOMIAL pn;
+    FUNCTION fn;
     volumetype vtype;
     walktype wtype;
     double error;
     unsigned int N, wlength;
     try {
-        parse_args(argc, argv, pt, pn, error, vtype, wtype, N, wlength);
+        parse_args(argc, argv, pt, fn, error, vtype, wtype, N, wlength);
     } catch (const std::runtime_error& ex) {
         std::cerr << ex.what() << std::endl;
         std::cerr << "Try '--help' for more information." << std::endl;
@@ -115,19 +134,23 @@ int main(int argc, char* argv[]) {
         std::cerr << "Try '--help' for more information." << std::endl;
         exit(1);
     }
-    DEBUG("Polytope file " << ptfile << std::endl "Polynomial file " << pnfile
-                           << std::endl "error " << error
-                           << std::endl "volumetype " << vtype
-                           << std::endl "walktype " << wtype << std::endl "N "
-                           << N << std::endl "wlength " << wlength
-                           << std::endl);
+#ifndef NDEBUG
+    std::cerr << "error " << error << std::endl
+              << "volumetype " << vtype << std::endl
+              << "walktype " << wtype << std::endl
+              << "N " << N << std::endl
+              << "wlength " << wlength << std::endl;
 
-    DEBUG("Integrating " << pn << std::endl);
+    std::cerr << "Integrating " << fn << std::endl;
     // DEBUG("Over polytope" << std::endl);
     // pt.print();
+#endif
 
-    double res = integrate_polynomial(pn, pt, error, vtype, wtype, N, wlength);
-    DEBUG("RES: " << res << std::endl);
+    double res = integrate_function(fn, pt, error, vtype, wtype, N, wlength);
+
+#ifndef NDEBUG
+    std::cerr << "RES: " << res << std::endl;
+#endif
 
     write_res(res);
 
