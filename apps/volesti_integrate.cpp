@@ -33,7 +33,7 @@ void write_res(NT res) { std::cout << "Decimal: " << res << std::endl; }
 void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn,
                 NT& error, volumetype& vtype, walktype& wtype,
                 unsigned int& N, unsigned int& wlength) {
-    argparse::ArgumentParser parser("./volesti_integrate_polynomial");
+    argparse::ArgumentParser parser("./volesti_integrate");
     parser.add_description(
         "Approximate integration of polynomial over polytopes");
 

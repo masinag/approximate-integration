@@ -73,8 +73,7 @@ message(STATUS "Library lp_solve found: ${LP_SOLVE}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
 # add_subdirectory(src)
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 include_directories(${volesti_SOURCE_DIR}/external)
 include_directories(${PROJECT_SOURCE_DIR}/include)
@@ -85,4 +84,5 @@ include_directories(${volesti_SOURCE_DIR}/include/generators)
 include_directories(${volesti_SOURCE_DIR}/include/integration)
 include_directories(${volesti_SOURCE_DIR}/include/misc)
 include_directories(${exprtk_SOURCE_DIR})
+
 add_subdirectory(apps)
