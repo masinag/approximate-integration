@@ -34,7 +34,7 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
                 unsigned int& wlength) {
     argparse::ArgumentParser parser("./volesti_integrate");
     parser.add_description(
-        "Approximate integration of polynomial over polytopes");
+        "Approximate integration of functions over polytopes");
 
     // polytope file
     parser.add_argument("polytope_file")
@@ -50,9 +50,10 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
         .scan<'g', NT>();
     // volume algorithm
     parser.add_argument("--volume")
-        .help("The method used to compute the volume. The available methods "
-              "are Cooling Balls (CB), Cooling Gaussians (CG) and Sequence Of "
-              "Balls (SOB)")
+        .help("The method used to compute the volume. The available methods are:\n"
+              "\tCB      Cooling Balls\n"
+              "\tCG      Cooling Gaussians\n"
+              "\tSOB     Sequence Of Balls")
         .default_value(std::string("CB"))
         .action([](const std::string& value) {
             if (volumes.find(value) != volumes.end())
@@ -62,9 +63,12 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
     // random walk type
     parser.add_argument("--walk")
         .help("The type of random walk to sample points. The available types "
-              "are Ball Walk (Ba), Random-Directions (RDHR) and "
-              "Coordinate-Directions (CDHR) Hit and Run, Billiard Walk (Bi), "
-              "Accelerated Billiard Walk (ABi)")
+              "are:\n"
+              "\tBa      Ball Walk\n"
+              "\tRDHR    Random Direction Hit and Run\n"
+              "\tCDHR    Coordinate Direction Hit and Run\n"
+              "\tBi      Billiard Walk\n"
+              "\tABi     Accelerated Billiard Walk")
         .default_value(std::string("CDHR"))
         .action([](const std::string& value) {
             if (walks.find(value) != walks.end())
@@ -85,7 +89,7 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
     ss << "The length of the random walk to sample random points. If 0, a "
           "default value is set to: \n";
     for (const auto& entry : default_wlength_exp) {
-        ss << '\t' << entry.first << ": min(" << min_wlength << ", d^"
+        ss << "\t" << std::left << std::setw(8) << entry.first << "min(" << min_wlength << ", d^"
            << entry.second << ")" << std::endl;
     }
     ss << "where d is the number of dimensions of the polytope";

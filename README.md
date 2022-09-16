@@ -25,16 +25,24 @@ error           The relative error tolerated
 Optional arguments:
 -h --help       shows help message and exits [default: false]
 -v --version    prints version information and exits [default: false]
---volume        The method used to compute the volume. The available methods are Cooling Balls (CB), Cooling Gaussians (CG) and Sequence Of Balls (SOB) [default: "CB"]
---walk          The type of random walk to sample points. The available types are Ball Walk (Ba), Random-Directions (RDHR) and Coordinate-Directions (CDHR) Hit and Run, Billiard Walk (Bi), Accelerated Billiard Walk (ABi) [default: "CDHR"]
+--volume        The method used to compute the volume. The available methods are:
+        CB      Cooling Balls
+        CG      Cooling Gaussians
+        SOB     Sequence Of Balls [default: "CB"]
+--walk          The type of random walk to sample points. The available types are:
+        Ba      Ball Walk
+        RDHR    Random Direction Hit and Run
+        CDHR    Coordinate Direction Hit and Run
+        Bi      Billiard Walk
+        ABi     Accelerated Billiard Walk [default: "CDHR"]
 --N             The number of points used to estimate the integral [default: 1000]
 --wlength       The length of the random walk to sample random points. If 0, a default value is set to: 
-        ABi:  min(10, d^2)
-        Bi:   min(10, d^2)
-        Ba:   min(10, d^2.5)
-        CDHR: min(10, d^3)
-        RDHR: min(10, d^3)
-where d is the number of dimensions of the polytope
+        ABi     min(10, d^2)
+        Bi      min(10, d^2)
+        Ba      min(10, d^2.5)
+        CDHR    min(10, d^3)
+        RDHR    min(10, d^3)
+where d is the number of dimensions of the polytope 
 ```
 
 ## Running Examples
