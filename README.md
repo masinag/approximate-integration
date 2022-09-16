@@ -40,5 +40,5 @@ where d is the number of dimensions of the polytope
 ## Running Examples
 Examples can be runned with:
 ```
-bin/volesti_integrate examples/example-gaussian/polytope.latte examples/example-gaussian/gaussian.expr 0.001 
+bin/volesti_integrate examples/example-gaussian/polytope.hrep examples/example-gaussian/gaussian.expr 0.001 
 ```
