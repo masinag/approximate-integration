@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 void read_pt(const std::string& ptfile, HPOLYTOPE& pt) {
     std::ifstream inp;
     std::vector<std::vector<NT>> Pin;
@@ -30,9 +29,9 @@ void read_fn(const std::string& fnfile, FUNCTION& fn) {
 
 void write_res(NT res) { std::cout << "Decimal: " << res << std::endl; }
 
-void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn,
-                NT& error, volumetype& vtype, walktype& wtype,
-                unsigned int& N, unsigned int& wlength) {
+void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
+                volumetype& vtype, walktype& wtype, unsigned int& N,
+                unsigned int& wlength) {
     argparse::ArgumentParser parser("./volesti_integrate");
     parser.add_description(
         "Approximate integration of polynomial over polytopes");
@@ -79,13 +78,15 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn,
         .scan<'u', unsigned int>();
     // random walk length
     std::unordered_map<std::string, double> default_wlength_exp = {
-        {"RDHR", 3}, {"CDHR", 10}, {"Ba", 2.5}, {"Bi", 2}, {"ABi", 2},
+        {"RDHR", 3}, {"CDHR", 3}, {"Ba", 2.5}, {"Bi", 2}, {"ABi", 2},
     };
+    unsigned int min_wlength = 10;
     std::ostringstream ss;
     ss << "The length of the random walk to sample random points. If 0, a "
           "default value is set to: \n";
     for (const auto& entry : default_wlength_exp) {
-        ss << '\t' << entry.first << ": d^" << entry.second << std::endl;
+        ss << '\t' << entry.first << ": min(" << min_wlength << ", d^"
+           << entry.second << ")" << std::endl;
     }
     ss << "where d is the number of dimensions of the polytope";
     parser.add_argument("--wlength")
@@ -111,7 +112,9 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn,
     N = parser.get<unsigned int>("--N");
     wlength = parser.get<unsigned int>("--wlength");
     if (wlength == 0U)
-        wlength = std::pow(pt.dimension(), default_wlength_exp[wtype_str]);
+        wlength = std::min(
+            min_wlength, static_cast<unsigned int>(std::pow(
+                             pt.dimension(), default_wlength_exp[wtype_str])));
 }
 
 int main(int argc, char* argv[]) {

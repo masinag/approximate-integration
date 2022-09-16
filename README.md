@@ -8,7 +8,7 @@ cd build
 cmake ..
 make
 ```
-This will create an executable fine named `bin/volesti_integrate`. 
+This will create an executable file named `bin/volesti_integrate`. 
 
 ## Usage
 ```
@@ -29,11 +29,11 @@ Optional arguments:
 --walk          The type of random walk to sample points. The available types are Ball Walk (Ba), Random-Directions (RDHR) and Coordinate-Directions (CDHR) Hit and Run, Billiard Walk (Bi), Accelerated Billiard Walk (ABi) [default: "CDHR"]
 --N             The number of points used to estimate the integral [default: 1000]
 --wlength       The length of the random walk to sample random points. If 0, a default value is set to: 
-        ABi: d^2
-        Bi: d^2
-        Ba: d^2.5
-        CDHR: d^10
-        RDHR: d^3
+        ABi:  min(10, d^2)
+        Bi:   min(10, d^2)
+        Ba:   min(10, d^2.5)
+        CDHR: min(10, d^3)
+        RDHR: min(10, d^3)
 where d is the number of dimensions of the polytope
 ```
 
