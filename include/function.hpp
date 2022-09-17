@@ -10,20 +10,37 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief Class representing a mathematical function
+ * @tparam Point The input type of the function
+ * @tparam NT    The output type of the function
+ */
 template <typename Point, typename NT> class Function {
   private:
+    // value of the input variables
     std::vector<NT> vars;
+    // expression tree
     exprtk::expression<NT> expression;
+    // string representing the expression
     std::string expression_string;
+    // the names of the input variables
     std::vector<std::string> var_names;
-    exprtk::symbol_table<NT> symbol_table;
 
   public:
-    Function() {}
+    /** @brief Default constructor. */
+    Function() = default;
+
+    /**
+     * @brief Construct a new Function object
+     *
+     * @param expression_string The string representing the function
+     * @param var_names         The names of the variables
+     */
     Function(const std::string& expression_string,
              const std::vector<std::string>& var_names)
-        : var_names(var_names), expression_string(expression_string) {
+        : expression_string(expression_string), var_names(var_names) {
         exprtk::parser<NT> parser;
+        exprtk::symbol_table<NT> symbol_table;
         vars.resize(var_names.size());
         for (int i = 0; i < var_names.size(); i++) {
             symbol_table.add_variable(var_names[i], vars[i], false);
@@ -41,38 +58,54 @@ template <typename Point, typename NT> class Function {
         parser.compile(expression_string, expression);
     }
 
-    Function(const Function& other) : Function(other.expression_string, other.var_names) {}
+    /** @brief Copy constructor
+     *
+     * @param other The other function to copy
+     */
+    Function(const Function& other)
+        : Function(other.expression_string, other.var_names) {}
 
+    /**
+     * @brief Evaluate the function at a given point
+     *
+     * @param X the point to evaluate the function at
+     * @return the value of the function at the point
+     */
     NT operator()(const Point X) {
         for (int i = 0; i < vars.size(); i++) {
             vars[i] = X[i];
         }
-        NT value = expression.value();
-
 #ifndef NDEBUG
         std::cerr << "Value of " << *this << " in (";
         for (auto& v : vars) {
             std::cerr << v << " ";
         }
-        std::cerr << ") = " << value << std::endl;
+        std::cerr << ") = " << expression.value() << std::endl;
 #endif
-        return value;
+        return expression.value();
     }
 
     friend std::ostream& operator<<(std::ostream& out, const Function& fn) {
-        out << fn.expression_string;
-        return out;
+        return out << fn.expression_string;
     }
 };
 
 /**
+ * @brief Read a function from a file
+ *
  * Input format:
  * <variable_0> <variable_1> ... <variable_n>
  * <expression>
  *
  * Example:
- * x0 x1, x2
+ * x0 x1 x2
  * x1 + x0 * x2
+ *
+ *
+ * @tparam Point The input type of the function
+ * @tparam NT    The output type of the function
+ * @param is     The input stream to read from
+ * @param fn     The function to read into
  */
 template <typename Point, typename NT>
 void read_function(std::istream& is, Function<Point, NT>& fn) {
@@ -83,7 +116,7 @@ void read_function(std::istream& is, Function<Point, NT>& fn) {
     while (iss >> variable_name) {
         var_names.push_back(variable_name);
     }
-    getline(is, line);
+    std::getline(is, line);
 
 #ifndef NDEBUG
     std::cerr << "Read variables: ";
