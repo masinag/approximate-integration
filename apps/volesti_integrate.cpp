@@ -1,7 +1,6 @@
 #include "function.hpp"
 #include "integration.hpp"
 #include <argparse/argparse.hpp>
-#include <exception>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -68,8 +67,8 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
               "\tRDHR    Random Direction Hit and Run\n"
               "\tCDHR    Coordinate Direction Hit and Run\n"
               "\tBi      Billiard Walk\n"
-              "\tABi     Accelerated Billiard Walk")
-        .default_value(std::string("CDHR"))
+              "\tABi     Accelerated Billiard Walk" )
+        .default_value(std::string("ABi"))
         .action([](const std::string& value) {
             if (walks.find(value) != walks.end())
                 return value;
