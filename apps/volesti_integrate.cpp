@@ -49,7 +49,8 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
         .scan<'g', NT>();
     // volume algorithm
     parser.add_argument("--volume")
-        .help("The method used to compute the volume. The available methods are:\n"
+        .help("The method used to compute the volume. The available methods "
+              "are:\n"
               "\tCB      Cooling Balls\n"
               "\tCG      Cooling Gaussians\n"
               "\tSOB     Sequence Of Balls")
@@ -67,7 +68,7 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
               "\tRDHR    Random Direction Hit and Run\n"
               "\tCDHR    Coordinate Direction Hit and Run\n"
               "\tBi      Billiard Walk\n"
-              "\tABi     Accelerated Billiard Walk" )
+              "\tABi     Accelerated Billiard Walk")
         .default_value(std::string("ABi"))
         .action([](const std::string& value) {
             if (walks.find(value) != walks.end())
@@ -83,13 +84,13 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
     std::unordered_map<std::string, double> default_wlength_exp = {
         {"RDHR", 3}, {"CDHR", 3}, {"Ba", 2.5}, {"Bi", 2}, {"ABi", 2},
     };
-    unsigned int max_wlength = 10;
+    unsigned int min_wlength = 10;
     std::ostringstream ss;
     ss << "The length of the random walk to sample random points. If 0, a "
           "default value is set to: \n";
     for (const auto& entry : default_wlength_exp) {
-        ss << "\t" << std::left << std::setw(8) << entry.first << "max(" << max_wlength << ", d^"
-           << entry.second << ")" << std::endl;
+        ss << "\t" << std::left << std::setw(8) << entry.first << "max("
+           << min_wlength << ", d^" << entry.second << ")" << std::endl;
     }
     ss << "where d is the number of dimensions of the polytope";
     parser.add_argument("--wlength")
@@ -116,7 +117,7 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
     wlength = parser.get<unsigned int>("--wlength");
     if (wlength == 0U)
         wlength = std::max(
-            max_wlength, static_cast<unsigned int>(std::pow(
+            min_wlength, static_cast<unsigned int>(std::pow(
                              pt.dimension(), default_wlength_exp[wtype_str])));
 }
 
