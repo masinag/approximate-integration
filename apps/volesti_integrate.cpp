@@ -29,8 +29,8 @@ void read_fn(const std::string& fnfile, FUNCTION& fn) {
 void write_res(NT res) { std::cout << "Decimal: " << res << std::endl; }
 
 void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
-                volumetype& vtype, walktype& wtype, unsigned int& N,
-                unsigned int& wlength) {
+                volumetype& vtype, walktype& wtype,
+                unsigned int& wlength, unsigned int& seed, unsigned int& N) {
     argparse::ArgumentParser parser("./volesti_integrate");
     parser.add_description(
         "Approximate integration of functions over polytopes");
@@ -51,9 +51,9 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
     parser.add_argument("--volume")
         .help("The method used to compute the volume. The available methods "
               "are:\n"
-              "\tCB      Cooling Balls\n"
-              "\tCG      Cooling Gaussians\n"
-              "\tSOB     Sequence Of Balls")
+              "\t\t\t\tCB      Cooling Balls\n"
+              "\t\t\t\tCG      Cooling Gaussians\n"
+              "\t\t\t\tSOB     Sequence Of Balls")
         .default_value(std::string("CB"))
         .action([](const std::string& value) {
             if (volumes.find(value) != volumes.end())
@@ -64,42 +64,47 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
     parser.add_argument("--walk")
         .help("The type of random walk to sample points. The available types "
               "are:\n"
-              "\tBa      Ball Walk\n"
-              "\tRDHR    Random Direction Hit and Run\n"
-              "\tCDHR    Coordinate Direction Hit and Run\n"
-              "\tBi      Billiard Walk\n"
-              "\tABi     Accelerated Billiard Walk")
-        .default_value(std::string("ABi"))
+              "\t\t\t\tBa      Ball Walk\n"
+              "\t\t\t\tRDHR    Random Direction Hit and Run\n"
+              "\t\t\t\tCDHR    Coordinate Direction Hit and Run\n"
+              "\t\t\t\tBi      Billiard Walk\n"
+              "\t\t\t\tABi     Accelerated Billiard Walk")
+        .default_value(std::string("CDHR"))
         .action([](const std::string& value) {
             if (walks.find(value) != walks.end())
                 return value;
             throw std::runtime_error("Invalid walk type");
         });
-    // number of points for integral
-    parser.add_argument("--N")
-        .help("The number of points used to estimate the integral")
-        .default_value(1000U)
-        .scan<'u', unsigned int>();
+
     // random walk length
     std::unordered_map<std::string, double> default_wlength_exp = {
         {"RDHR", 3}, {"CDHR", 3}, {"Ba", 2.5}, {"Bi", 2}, {"ABi", 2},
     };
     unsigned int min_wlength = 10;
     std::ostringstream ss;
-    ss << "The length of the random walk to sample random points. If 0, a "
-          "default value is set to: \n";
+    ss << "The length of the random walk to sample random points. Default "
+          "value is set to: \n";
     for (const auto& entry : default_wlength_exp) {
-        ss << "\t" << std::left << std::setw(8) << entry.first << "max("
+        ss << "\t\t\t\t" << std::left << std::setw(8) << entry.first << "max("
            << min_wlength << ", d^" << entry.second << ")" << std::endl;
     }
     ss << "where d is the number of dimensions of the polytope";
-    parser.add_argument("--wlength")
-        .help(ss.str())
-        .default_value(0U)
+    parser.add_argument("--wlength").help(ss.str()).scan<'u', unsigned int>();
+
+    // random seed
+    parser.add_argument("--seed")
+        .help("The seed used to initialize the random number generator")
         .scan<'u', unsigned int>();
-    parser.parse_args(argc, argv);
+
+    // number of points for MC integral estimation
+    parser.add_argument("--N")
+        .help("The number of points used to estimate the integral")
+        .default_value(1000U)
+        .scan<'u', unsigned int>();
 
     // parse arguments
+    parser.parse_args(argc, argv);
+
     std::string ptfile = parser.get<std::string>("polytope_file");
     std::string fnfile = parser.get<std::string>("integrand_file");
 
@@ -114,11 +119,21 @@ void parse_args(int argc, char* argv[], HPOLYTOPE& pt, FUNCTION& fn, NT& error,
     std::string wtype_str = parser.get<std::string>("--walk");
     wtype = walks.at(wtype_str);
     N = parser.get<unsigned int>("--N");
-    wlength = parser.get<unsigned int>("--wlength");
-    if (wlength == 0U)
-        wlength = std::max(
-            min_wlength, static_cast<unsigned int>(std::pow(
-                             pt.dimension(), default_wlength_exp[wtype_str])));
+
+    if (auto opt_wlength = parser.present<unsigned int>("--wlength")) {
+        wlength = *opt_wlength;
+    } else {
+        wlength =
+            std::max(min_wlength,
+                     static_cast<unsigned int>(std::pow(
+                         pt.dimension(), default_wlength_exp.at(wtype_str))));
+    }
+
+    if (auto opt_seed = parser.present<unsigned int>("--seed")) {
+        seed = *opt_seed;
+    } else {
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -129,9 +144,9 @@ int main(int argc, char* argv[]) {
     volumetype vtype;
     walktype wtype;
     double error;
-    unsigned int N, wlength;
+    unsigned int wlength, seed, N;
     try {
-        parse_args(argc, argv, pt, fn, error, vtype, wtype, N, wlength);
+        parse_args(argc, argv, pt, fn, error, vtype, wtype, wlength, seed, N);
     } catch (const std::runtime_error& ex) {
         std::cerr << ex.what() << std::endl;
         std::cerr << "Try '--help' for more information." << std::endl;
@@ -153,7 +168,8 @@ int main(int argc, char* argv[]) {
     // pt.print();
 #endif
 
-    double res = integrate_function(fn, pt, error, vtype, wtype, N, wlength);
+    double res =
+        integrate_function(fn, pt, error, vtype, wtype, wlength, seed, N);
 
 #ifndef NDEBUG
     std::cerr << "RES: " << res << std::endl;

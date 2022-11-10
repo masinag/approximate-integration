@@ -33,38 +33,42 @@ static const std::unordered_map<std::string, walktype> walks = {
  * @param vtype the algorithm to use to compute the volume of the polytope
  * @param wtype the type of random walk to use to sample points from the
  * polytope
- * @param N the number of points to sample to estimate the integral
  * @param wlength the length of the random walk to use to sample points from the
  * polytope
+ * @param seed the seed to use for the random number generator
+ * @param N the number of samples to use for the Monte Carlo integration
+ *
  * @return the estimated value of the integral
  */
 template <typename NT>
 NT integrate_function(const FUNCTION& fn, HPOLYTOPE& pt, const NT error,
-                      const volumetype vtype, const walktype wtype, const int N,
-                      const int wlength) {
+                      const volumetype vtype, const walktype wtype,
+                      const unsigned int wlength, const unsigned int seed, const unsigned int N) {
     NT res;
+    BoostRandomNumberGenerator<boost::mt19937, NT> rng(pt.dimension());
+    rng.set_seed(seed);
     switch (wtype) {
     case Ba: // BallWalk
         res = simple_mc_polytope_integrate<BallWalk, HPOLYTOPE, BallWalk>(
-            fn, pt, N, vtype, wlength, error);
+            fn, pt, rng, N, vtype, wlength, error);
         break;
     case CDHR: // CDHRWalk
         res = simple_mc_polytope_integrate<CDHRWalk, HPOLYTOPE, CDHRWalk>(
-            fn, pt, N, vtype, wlength, error);
+            fn, pt, rng, N, vtype, wlength, error);
         break;
     case RDHR: // RDHRWalk
         res = simple_mc_polytope_integrate<RDHRWalk, HPOLYTOPE, RDHRWalk>(
-            fn, pt, N, vtype, wlength, error);
+            fn, pt, rng, N, vtype, wlength, error);
         break;
     case Bi: // BilliardWalk
         res =
             simple_mc_polytope_integrate<BilliardWalk, HPOLYTOPE, BilliardWalk>(
-                fn, pt, N, vtype, wlength, error);
+                fn, pt, rng, N, vtype, wlength, error);
         break;
-    case ABi: // AcceleratedBilliwardWalk
+    case ABi: // AcceleratedBilliardWalk
         res = simple_mc_polytope_integrate<AcceleratedBilliardWalk, HPOLYTOPE,
                                            AcceleratedBilliardWalk>(
-            fn, pt, N, vtype, wlength, error);
+            fn, pt, rng, N, vtype, wlength, error);
         break;
     default:
         std::cerr << "Invalid Walk Type" << std::endl;

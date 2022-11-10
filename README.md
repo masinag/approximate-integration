@@ -13,7 +13,7 @@ This will create an executable file named `bin/volesti_integrate`.
 ## Usage
 ```
 ❯ bin/volesti_integrate --help
-Usage: ./volesti_integrate [-h] [--volume VAR] [--walk VAR] [--N VAR] [--wlength VAR] polytope_file integrand_file error
+Usage: ./volesti_integrate [-h] [--volume VAR] [--walk VAR] [--wlength VAR] [--seed VAR] [--N VAR] polytope_file integrand_file error
 
 Approximate integration of functions over polytopes
 
@@ -26,23 +26,24 @@ Optional arguments:
   -h, --help            shows help message and exits 
   -v, --version         prints version information and exits 
   --volume              The method used to compute the volume. The available methods are:
-        CB      Cooling Balls
-        CG      Cooling Gaussians
-        SOB     Sequence Of Balls [default: "CB"]
+                                CB      Cooling Balls
+                                CG      Cooling Gaussians
+                                SOB     Sequence Of Balls [default: "CB"]
   --walk                The type of random walk to sample points. The available types are:
-        Ba      Ball Walk
-        RDHR    Random Direction Hit and Run
-        CDHR    Coordinate Direction Hit and Run
-        Bi      Billiard Walk
-        ABi     Accelerated Billiard Walk [default: "ABi"]
+                                Ba      Ball Walk
+                                RDHR    Random Direction Hit and Run
+                                CDHR    Coordinate Direction Hit and Run
+                                Bi      Billiard Walk
+                                ABi     Accelerated Billiard Walk [default: "CDHR"]
+  --wlength             The length of the random walk to sample random points. Default value is set to: 
+                                ABi     max(10, d^2)
+                                Bi      max(10, d^2)
+                                Ba      max(10, d^2.5)
+                                CDHR    max(10, d^3)
+                                RDHR    max(10, d^3)
+where d is the number of dimensions of the polytope 
+  --seed                The seed used to initialize the random number generator 
   --N                   The number of points used to estimate the integral [default: 1000]
-  --wlength             The length of the random walk to sample random points. If 0, a default value is set to: 
-        ABi     max(10, d^2)
-        Bi      max(10, d^2)
-        Ba      max(10, d^2.5)
-        CDHR    max(10, d^3)
-        RDHR    max(10, d^3)
-where d is the number of dimensions of the polytope [default: 0]
 ```
 
 ## Running Examples

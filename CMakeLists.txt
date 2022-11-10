@@ -39,7 +39,7 @@ FetchContent_MakeAvailable(exprtk)
 message(STATUS "Fetching volesti from ${volesti_remote}")
 FetchContent_Declare(volesti
     GIT_REPOSITORY ${volesti_remote}
-    GIT_TAG 38f6b34bae2599fd83455a7600e3acbc32ddd189
+    GIT_TAG ba0e697a414bda101c8010676cc929131da2f064
 )
 FetchContent_MakeAvailable(volesti)
 message(STATUS "Volesti fetched correctly")
