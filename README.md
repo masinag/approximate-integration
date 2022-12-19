@@ -3,12 +3,9 @@ Command line tool that computes the approximate integral of arbitrary functions 
 
 ## Building
 ```
-mkdir build
-cd build
-cmake ..
-make
+make build
 ```
-This will create an executable file named `bin/volesti_integrate`. 
+This will create an executable file named `bin/volesti_integrate`.
 
 ## Usage
 ```
